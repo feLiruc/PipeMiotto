@@ -59,7 +59,10 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-init().then(() => {
+const args = process.argv.slice(2);
+const shouldClean = args.includes('--clean');
+
+init(shouldClean).then(() => {
   console.log('⚙️ Inicialização do banco de dados concluída');
   app.listen(PORT, () => {
     console.log(`🚀 API ouvindo na porta ${PORT}`);

@@ -23,7 +23,7 @@ async function connectToDatabase() {
 
 
 async function dropTablesOnce() {
-  const tables = ['webhook_activity', 'webhook_deal', 'webhook_full_log', 'webhook_person', 'webhook_organization'];
+  const tables = ['webhook_activities', 'webhook_deals', 'webhook_organizations', 'webhook_persons', 'webhook_activity', 'webhook_deal', 'webhook_full_log', 'webhook_person', 'webhook_organization'];
   for (const table of tables) {
     try {
       await pool.query(`DROP TABLE IF EXISTS \`${table}\``);
@@ -68,25 +68,40 @@ async function insertFullLog(event, entity, fullPayload, empresa) {
 }
 
 async function insertEvent(table, event, data, empresa) {
-  const keys = Object.keys(data);
-  for (const key of keys) {
+  const tableConfig = config.tables[table];
+  if (!tableConfig) {
+    console.error(`❌ Configuração para a tabela '${table}' não encontrada.`);
+    return;
+  }
+
+  const allowedColumns = Object.keys(tableConfig.columns);
+  const filteredData = Object.keys(data)
+    .filter(key => allowedColumns.includes(key))
+    .reduce((obj, key) => {
+      obj[key] = data[key];
+      return obj;
+    }, {});
+
+  for (const key of Object.keys(filteredData)) {
     await ensureColumn(table, key);
   }
   await ensureColumn(table, 'empresa');
   await ensureColumn(table, 'event');
 
-  const columns = ['event', ...keys, 'empresa'];
+  const columns = ['event', ...Object.keys(filteredData), 'empresa'];
   const placeholders = columns.map(() => '?').join(', ');
-  const values = [event, ...keys.map(k => JSON.stringify(data[k])), empresa];
+  const values = [event, ...Object.values(filteredData).map(value => JSON.stringify(value)), empresa];
 
   const sql = `INSERT INTO \`${table}\` (${columns.map(c => `\`${c}\``).join(', ')}) VALUES (${placeholders})`;
   await pool.query(sql, values);
   console.log(`✅ Evento '${event}' inserido na tabela '${table}'`);
 }
 
-async function init() {
+async function init(shouldClean) {
   await connectToDatabase();
-  await dropTablesOnce();
+  if (shouldClean) {
+    await dropTablesOnce();
+  }
   for (const [table, def] of Object.entries(config.tables)) {
     const columns = Object.entries(def.columns);
     await ensureTable(table, columns);
