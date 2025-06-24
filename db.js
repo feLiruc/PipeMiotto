@@ -23,9 +23,11 @@ async function connectToDatabase() {
 
 async function ensureTable(table, columns) {
   const seen = new Set();
-  const filtered = columns.filter(([key]) => key !== 'id' && !seen.has(key) && seen.add(key));
+  const filtered = columns.filter(([key]) => !seen.has(key) && seen.add(key));
   const cols = filtered.map(([key, type]) => `\`${key}\` ${type}`).join(', ');
-  const sql = `CREATE TABLE IF NOT EXISTS \`${table}\` (id INT AUTO_INCREMENT PRIMARY KEY, ${cols})`;
+  
+  const sql = `CREATE TABLE IF NOT EXISTS \`${table}\` (auto_id INT AUTO_INCREMENT PRIMARY KEY, ${cols})`;
+
   await pool.query(sql);
   console.log(`🛠️ Tabela '${table}' verificada/criada.`);
 }
