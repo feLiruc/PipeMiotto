@@ -9,6 +9,10 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
 app.post('/webhook', async (req, res) => {
+
+  console.log('🔔 Recebendo webhook...');
+  console.log('📦 Dados recebidos:', JSON.stringify(req.body, null, 2));
+  
   const { event, current, meta } = req.body;
 
   if (event === 'ping') {
