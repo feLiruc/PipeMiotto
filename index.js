@@ -19,18 +19,17 @@ app.post('/webhook', async (req, res) => {
   const expectedToken = process.env.WEBHOOK_TOKEN;
   const receivedToken = req.headers['x-pipedrive-webhook-token'];
 
-  if (expectedToken && receivedToken !== expectedToken) {
-    return res.status(403).send('❌ Token inválido');
-  }
-
-  if (!event || !current) {
-    return res.status(400).send('❌ Dados incompletos');
-  }
+  console.log('🔗 Tratamento do webhook...');
+  console.log(`🧾 Evento recebido: ${event}`);
+  console.log(`🔐 Token recebido: ${receivedToken}`);
+  console.log(`🔍 Token esperado: ${expectedToken}`);
 
   try {
     const action = event.split('.')[0]; // Ex: "create", "change", "delete"
     const entity = event.split('.')[1]; // Ex: "deal", "activity", etc.
     const table = `webhook_${entity}s`;
+
+    console.log(`🧩 Ação: ${action}, Entidade: ${entity}, Tabela: ${table}`);
 
     const empresasMap = {
       13881612: 'Matriz',
@@ -39,25 +38,32 @@ app.post('/webhook', async (req, res) => {
 
     const empresaNome = empresasMap[meta?.company_id] || 'Desconhecida';
 
+    console.log(`🏢 Empresa identificada: ${empresaNome}`);
+    console.log('📦 Dados recebidos:', JSON.stringify(req.body, null, 2));
+
     // Log the full payload
     await insertFullLog(event, entity, req.body, empresaNome);
+    console.log('📝 Log completo inserido com sucesso');
 
     if (action === 'delete') {
-      // Mark the record as deleted
+      console.log('❌ Evento de exclusão detectado');
       await insertEvent(table, event, { ...current, deleted: true }, empresaNome);
+      console.log('🗑️ Registro marcado como deletado');
     } else {
-      // Insert or update the record
+      console.log('🆕 Evento de criação/atualização detectado');
       await insertEvent(table, event, current, empresaNome);
+      console.log('✅ Registro inserido/atualizado com sucesso');
     }
 
     res.send(`✅ Webhook '${event}' processado com sucesso.`);
   } catch (err) {
-    console.error(err);
+    console.error('🔥 Erro ao processar webhook:', err);
     res.status(500).send('❌ Erro interno');
   }
 });
 
 init().then(() => {
+  console.log('⚙️ Inicialização do banco de dados concluída');
   app.listen(PORT, () => {
     console.log(`🚀 API ouvindo na porta ${PORT}`);
   });
