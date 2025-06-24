@@ -106,7 +106,8 @@
         "participants.person_id": "TEXT",
         "participants.primary_flag": "TEXT",
         "event": "TEXT",
-        "created_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+        "created_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+        "deleted": "TEXT"
       }
     },
     "webhook_persons": {
@@ -137,7 +138,8 @@
         "Empresa": "TEXT",
         "update_time": "TEXT",
         "event": "TEXT",
-        "created_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+        "created_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+        "deleted": "TEXT"
       }
     },
     "webhook_organizations": {
@@ -169,7 +171,8 @@
         "Empresa": "TEXT",
         "update_time": "TEXT",
         "event": "TEXT",
-        "created_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+        "created_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+        "deleted": "TEXT"
       }
     },
     "webhook_full_log": {

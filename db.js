@@ -21,6 +21,20 @@ async function connectToDatabase() {
   console.log(`🔌 Conectado ao banco '${DB_NAME}'`);
 }
 
+
+async function dropTablesOnce() {
+  const tables = ['webhook_activities', 'webhook_deals', 'webhook_full_log', 'webhook_persons', 'webhook_organizations', 'webhook_updateds'];
+  for (const table of tables) {
+    try {
+      await pool.query(`DROP TABLE IF EXISTS \`${table}\``);
+      console.log(`🗑️ Tabela '${table}' deletada com sucesso.`);
+    } catch (err) {
+      console.error(`❌ Erro ao deletar tabela '${table}':`, err.message);
+    }
+  }
+}
+
+
 async function ensureTable(table, columns) {
   const seen = new Set();
   const filtered = columns.filter(([key]) => !seen.has(key) && seen.add(key));
@@ -72,6 +86,7 @@ async function insertEvent(table, event, data, empresa) {
 
 async function init() {
   await connectToDatabase();
+  // await dropTablesOnce();
   for (const [table, def] of Object.entries(config.tables)) {
     const columns = Object.entries(def.columns);
     await ensureTable(table, columns);

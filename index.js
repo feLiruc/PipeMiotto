@@ -28,19 +28,29 @@ app.post('/webhook', async (req, res) => {
   }
 
   try {
-    const empresasMap = {
-      123456: 'Empresa A',
-      789012: 'Empresa B'
-    };
-    const empresaNome = empresasMap[meta?.company_id] || 'Desconhecida';
-
-    const entity = event.split('.')[1];
+    const action = event.split('.')[0]; // Ex: "create", "change", "delete"
+    const entity = event.split('.')[1]; // Ex: "deal", "activity", etc.
     const table = `webhook_${entity}s`;
 
-    await insertFullLog(event, entity, req.body, empresaNome);
-    await insertEvent(table, event, current, empresaNome);
+    const empresasMap = {
+      13881612: 'Matriz',
+      789012: 'Empresa B'
+    };
 
-    res.send(`✅ Webhook '${event}' inserido em '${table}'`);
+    const empresaNome = empresasMap[meta?.company_id] || 'Desconhecida';
+
+    // Log the full payload
+    await insertFullLog(event, entity, req.body, empresaNome);
+
+    if (action === 'delete') {
+      // Mark the record as deleted
+      await insertEvent(table, event, { ...current, deleted: true }, empresaNome);
+    } else {
+      // Insert or update the record
+      await insertEvent(table, event, current, empresaNome);
+    }
+
+    res.send(`✅ Webhook '${event}' processado com sucesso.`);
   } catch (err) {
     console.error(err);
     res.status(500).send('❌ Erro interno');
