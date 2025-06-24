@@ -21,7 +21,7 @@ app.post('/webhook', async (req, res) => {
 
   const action = meta.action; // Ex: "change", "add", "delete"
   const entity = meta.entity; // Ex: "activity", "deal", etc.
-  const table = `webhook_${entity}s`;
+  const table = `webhook_${entity}`;
 
   console.log(`🧩 Ação: ${action}, Entidade: ${entity}, Tabela: ${table}`);
 
@@ -33,20 +33,22 @@ app.post('/webhook', async (req, res) => {
   const empresaNome = empresasMap[meta.company_id] || 'Desconhecida';
 
   console.log(`🏢 Empresa identificada: ${empresaNome}`);
-  console.log('📦 Dados recebidos:', JSON.stringify(data, null, 2));
 
   try {
+    // Merge all fields from data, previous, and meta into a single object
+    const mergedData = { ...data, ...previous, ...meta };
+
     // Log the full payload
-    await insertFullLog(action, entity, req.body, empresaNome);
+    await insertFullLog(action, entity, mergedData, empresaNome);
     console.log('📝 Log completo inserido com sucesso');
 
     if (action === 'delete') {
       console.log('❌ Evento de exclusão detectado');
-      await insertEvent(table, action, { ...data, deleted: true }, empresaNome);
+      await insertEvent(table, action, { ...mergedData, deleted: true }, empresaNome);
       console.log('🗑️ Registro marcado como deletado');
     } else {
       console.log('🆕 Evento de criação/atualização detectado');
-      await insertEvent(table, action, data, empresaNome);
+      await insertEvent(table, action, mergedData, empresaNome);
       console.log('✅ Registro inserido/atualizado com sucesso');
     }
 

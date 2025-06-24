@@ -1,6 +1,6 @@
 {
   "tables": {
-    "webhook_deals": {
+    "webhook_deal": {
       "columns": {
         "id": "TEXT",
         "creator_user_id.id": "TEXT",
@@ -56,7 +56,7 @@
         "created_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
       }
     },
-    "webhook_activities": {
+    "webhook_activity": {
       "columns": {
         "id": "TEXT",
         "company_id": "TEXT",
@@ -110,7 +110,7 @@
         "deleted": "TEXT"
       }
     },
-    "webhook_persons": {
+    "webhook_person": {
       "columns": {
         "id": "TEXT",
         "company_id": "TEXT",
@@ -142,7 +142,7 @@
         "deleted": "TEXT"
       }
     },
-    "webhook_organizations": {
+    "webhook_organization": {
       "columns": {
         "id": "TEXT",
         "owner_id": "TEXT",

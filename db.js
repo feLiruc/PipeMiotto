@@ -23,7 +23,7 @@ async function connectToDatabase() {
 
 
 async function dropTablesOnce() {
-  const tables = ['webhook_activities', 'webhook_deals', 'webhook_full_log', 'webhook_persons', 'webhook_organizations', 'webhook_updateds'];
+  const tables = ['webhook_activity', 'webhook_deal', 'webhook_full_log', 'webhook_person', 'webhook_organization'];
   for (const table of tables) {
     try {
       await pool.query(`DROP TABLE IF EXISTS \`${table}\``);
@@ -86,7 +86,7 @@ async function insertEvent(table, event, data, empresa) {
 
 async function init() {
   await connectToDatabase();
-  // await dropTablesOnce();
+  await dropTablesOnce();
   for (const [table, def] of Object.entries(config.tables)) {
     const columns = Object.entries(def.columns);
     await ensureTable(table, columns);
