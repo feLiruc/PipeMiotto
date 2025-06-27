@@ -39,18 +39,18 @@ app.post('/webhook', async (req, res) => {
     const mergedData = { ...data, ...previous, ...meta };
 
     // Log the full payload
-    await insertFullLog(action, entity, mergedData, empresaNome);
+    await insertFullLog(action, entity, data, empresaNome);
     console.log('📝 Log completo inserido com sucesso');
 
-    if (action === 'delete') {
-      console.log('❌ Evento de exclusão detectado');
-      await insertEvent(table, action, { ...mergedData, deleted: true }, empresaNome);
-      console.log('🗑️ Registro marcado como deletado');
-    } else {
-      console.log('🆕 Evento de criação/atualização detectado');
-      await insertEvent(table, action, mergedData, empresaNome);
-      console.log('✅ Registro inserido/atualizado com sucesso');
-    }
+    // if (action === 'delete') {
+    //   console.log('❌ Evento de exclusão detectado');
+    //   await insertEvent(table, action, { ...mergedData, deleted: true }, empresaNome);
+    //   console.log('🗑️ Registro marcado como deletado');
+    // } else {
+    //   console.log('🆕 Evento de criação/atualização detectado');
+    //   await insertEvent(table, action, mergedData, empresaNome);
+    //   console.log('✅ Registro inserido/atualizado com sucesso');
+    // }
 
     res.send(`✅ Webhook '${action}' processado com sucesso.`);
   } catch (err) {
