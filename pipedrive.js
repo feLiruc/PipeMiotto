@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-const API_TOKEN = "df48b1c7e08c509b392a1365fce4ca5caed6045c";
+const API_TOKEN = "550ec0d8590d9a9c78c084699f4ca74ef8fc87c6";
 const SUBSCRIPTION_URL = "http://85.209.93.70:3847/webhook";
 
 const objetos = ["deal", "activity", "person", "organization"];

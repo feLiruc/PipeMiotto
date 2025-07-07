@@ -26,11 +26,10 @@ app.post('/webhook', async (req, res) => {
   console.log(`🧩 Ação: ${action}, Entidade: ${entity}, Tabela: ${table}`);
 
   const empresasMap = {
-    13881612: 'Matriz',
-    789012: 'Empresa B'
+    13881612: 'Matriz'
   };
 
-  const empresaNome = empresasMap[meta.company_id] || 'Desconhecida';
+  const empresaNome = empresasMap[meta.company_id] || 'Itapema';
 
   console.log(`🏢 Empresa identificada: ${empresaNome}`);
 
