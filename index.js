@@ -12,7 +12,9 @@ app.post('/webhook', async (req, res) => {
   console.log('🔔 Recebendo webhook...');
   console.log('📦 Dados recebidos:', JSON.stringify(req.body, null, 2));
 
-  const { data, previous, meta } = req.body;
+  const fullData = req.body;
+
+  const { data, previous, meta } = fullData;
 
   if (!meta || !meta.action || !meta.entity) {
     console.error('❌ Meta dados inválidos ou ausentes:', meta);
@@ -26,7 +28,8 @@ app.post('/webhook', async (req, res) => {
   console.log(`🧩 Ação: ${action}, Entidade: ${entity}, Tabela: ${table}`);
 
   const empresasMap = {
-    13881612: 'Matriz'
+    13881612: 'Matriz',
+    23342970: 'Itapema'
   };
 
   const empresaNome = empresasMap[meta.company_id] || 'Itapema';
@@ -35,10 +38,10 @@ app.post('/webhook', async (req, res) => {
 
   try {
     // Merge all fields from data, previous, and meta into a single object
-    const mergedData = { ...data, ...previous, ...meta };
+    // const mergedData = { ...data, ...previous, ...meta };
 
     // Log the full payload
-    await insertFullLog(action, entity, data, empresaNome);
+    await insertFullLog(action, entity, fullData, empresaNome);
     console.log('📝 Log completo inserido com sucesso');
 
     // if (action === 'delete') {
