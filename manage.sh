@@ -19,6 +19,16 @@ case "$1" in
             sleep 5
         fi
         
+        # Iniciar Kafka UI se estiver configurado
+        if systemctl is-enabled kafka-ui &>/dev/null; then
+            echo "🎨 Iniciando Kafka UI..."
+            sudo systemctl start kafka-ui
+        elif [ -f ~/kafdrop/docker-compose.yml ]; then
+            echo "🎨 Iniciando Kafdrop..."
+            cd ~/kafdrop && docker-compose up -d
+            cd - > /dev/null
+        fi
+        
         # Instalar dependências se necessário
         if [ ! -d "node_modules" ]; then
             echo "📦 Instalando dependências..."
@@ -76,6 +86,15 @@ case "$1" in
             echo "❌ Kafka: Parado"
         fi
         
+        # Status Kafka UI
+        if systemctl is-active kafka-ui &>/dev/null; then
+            echo "✅ Kafka UI: Rodando (http://localhost:8080)"
+        elif docker ps | grep -q kafdrop; then
+            echo "✅ Kafdrop: Rodando (http://localhost:9000)"
+        else
+            echo "❌ Interface Kafka: Parada"
+        fi
+        
         # Status API
         if [ -f api.pid ] && kill -0 $(cat api.pid) 2>/dev/null; then
             echo "✅ API: Rodando (PID: $(cat api.pid))"
@@ -115,6 +134,10 @@ case "$1" in
         echo "  restart - Reinicia o sistema"
         echo "  status  - Mostra status dos serviços"
         echo "  logs    - Mostra logs em tempo real"
+        echo ""
+        echo "Interfaces Web disponíveis:"
+        echo "  Kafka UI: http://SEU_IP:8080 (se instalado)"
+        echo "  Kafdrop:  http://SEU_IP:9000 (se instalado via Docker)"
         exit 1
         ;;
 esac
