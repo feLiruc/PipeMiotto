@@ -12,8 +12,14 @@
   "dependencies": {
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "kafkajs": "^2.2.4",
     "mysql2": "^3.14.1",
     "node-fetch": "^3.3.2",
     "pg": "^8.16.2"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "consumer": "node consumer.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   }
 }
