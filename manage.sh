@@ -1,14 +1,40 @@
 #!/bin/bash
 
-# Script para gerenciar o sistema de webhooks com Kafka
-# Usage: ./manage.sh [start|stop|restart|status|logs]
+# Script de gerenciamento completo do sistema webhook com Kafka
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+show_help() {
+    echo "📖 Sistema de Webhook com Kafka - Gerenciamento"
+    echo ""
+    echo "🚀 CONTROLE DE PROCESSOS:"
+    echo "  $0 start     - Inicia todos os processos"
+    echo "  $0 stop      - Para todos os processos"
+    echo "  $0 restart   - Reinicia todos os processos"
+    echo "  $0 status    - Mostra status dos processos"
+    echo "  $0 logs      - Mostra logs em tempo real"
+    echo "  $0 startup   - Configura inicialização automática"
+    echo ""
+    echo "📊 MONITORAMENTO:"
+    echo "  $0 health    - Verificar saúde do sistema"
+    echo "  $0 stats     - Dashboard de estatísticas"
+    echo "  $0 monitor   - Monitor em tempo real"
+    echo ""
+    echo "🔧 MANUTENÇÃO:"
+    echo "  $0 reprocess - Reprocessar mensagens fallback"
+    echo "  $0 reset     - Resetar consumer group"
+    echo "  $0 cleanup   - Limpar arquivos antigos"
+    echo ""
+    echo "🆘 EMERGÊNCIA:"
+    echo "  $0 emergency - Modo emergência (só fallback files)"
+    echo "  $0 recover   - Recuperar de emergência"
+    echo ""
+}
+
 case "$1" in
     start)
-        echo "🚀 Iniciando sistema de webhooks..."
+        echo "🚀 Iniciando sistema de webhooks com PM2..."
         
         # Verificar se Kafka está rodando
         if ! pgrep -f "kafka.Kafka" > /dev/null; then
@@ -35,45 +61,28 @@ case "$1" in
             npm install
         fi
         
-        # Iniciar API (webhook receiver)
-        echo "🌐 Iniciando API..."
-        nohup npm start > api.log 2>&1 &
-        echo $! > api.pid
+        # Criar diretório de logs se não existir
+        mkdir -p logs
         
-        # Iniciar Consumer
-        echo "🔄 Iniciando Consumer..."
-        nohup npm run consumer > consumer.log 2>&1 &
-        echo $! > consumer.pid
+        # Iniciar aplicações com PM2
+        echo "🌐 Iniciando API e Consumer com PM2..."
+        pm2 start ecosystem.config.json
+        pm2 save
         
         echo "✅ Sistema iniciado com sucesso!"
-        echo "📋 Para ver logs: ./manage.sh logs"
+        echo "� Use './manage.sh health' para verificar a saúde"
         ;;
         
     stop)
         echo "🛑 Parando sistema de webhooks..."
-        
-        # Parar API
-        if [ -f api.pid ]; then
-            kill $(cat api.pid) 2>/dev/null
-            rm api.pid
-            echo "🌐 API parada"
-        fi
-        
-        # Parar Consumer
-        if [ -f consumer.pid ]; then
-            kill $(cat consumer.pid) 2>/dev/null
-            rm consumer.pid
-            echo "🔄 Consumer parado"
-        fi
-        
+        pm2 stop all
         echo "✅ Sistema parado com sucesso!"
         ;;
         
     restart)
         echo "🔄 Reiniciando sistema..."
-        $0 stop
-        sleep 3
-        $0 start
+        pm2 restart all
+        echo "✅ Sistema reiniciado!"
         ;;
         
     status)
@@ -88,56 +97,139 @@ case "$1" in
         
         # Status Kafka UI
         if systemctl is-active kafka-ui &>/dev/null; then
-            echo "✅ Kafka UI: Rodando (http://localhost:8080)"
+            if systemctl is-active nginx &>/dev/null && [ -f /etc/nginx/sites-enabled/kafka-ui ]; then
+                echo "✅ Kafka UI: Rodando (http://localhost:8081) - PROTEGIDO"
+                echo "   👤 Usuário: admin | 🔑 Senha: [configurada no htpasswd]"
+            else
+                echo "✅ Kafka UI: Rodando (http://localhost:8080) - PROTEGIDO"
+                echo "   👤 Usuário: root | 🔑 Senha: [configurada no application.yml]"
+            fi
         elif docker ps | grep -q kafdrop; then
-            echo "✅ Kafdrop: Rodando (http://localhost:9000)"
+            echo "✅ Kafdrop: Rodando (http://localhost:9000) - SEM PROTEÇÃO"
         else
             echo "❌ Interface Kafka: Parada"
         fi
         
-        # Status API
-        if [ -f api.pid ] && kill -0 $(cat api.pid) 2>/dev/null; then
-            echo "✅ API: Rodando (PID: $(cat api.pid))"
-        else
-            echo "❌ API: Parada"
-        fi
-        
-        # Status Consumer
-        if [ -f consumer.pid ] && kill -0 $(cat consumer.pid) 2>/dev/null; then
-            echo "✅ Consumer: Rodando (PID: $(cat consumer.pid))"
-        else
-            echo "❌ Consumer: Parado"
-        fi
+        # Status PM2 Applications
+        echo ""
+        echo "📱 Status das aplicações PM2:"
+        pm2 status
+        echo ""
+        echo "🔗 Para diagnóstico completo use: './manage.sh health'"
         ;;
         
     logs)
-        echo "📋 Logs do sistema:"
-        echo "=== API LOGS ==="
-        tail -f api.log &
-        API_TAIL_PID=$!
+        echo "📋 Logs em tempo real (Ctrl+C para sair):"
+        pm2 logs
+        ;;
+
+    health)
+        echo "🏥 Verificando saúde do sistema..."
+        node health-monitor.js
+        ;;
+
+    stats)
+        echo "📊 Gerando dashboard de estatísticas..."
+        node stats-dashboard.js
+        ;;
+
+    monitor)
+        echo "📈 Monitor em tempo real (Ctrl+C para sair)..."
+        while true; do
+            clear
+            echo "� Atualizando... $(date)"
+            echo ""
+            node health-monitor.js
+            echo ""
+            echo "⏰ Próxima atualização em 30 segundos..."
+            sleep 30
+        done
+        ;;
+
+    reprocess)
+        echo "� Reprocessando mensagens fallback..."
+        node fallback-processor.js
+        echo "✅ Reprocessamento concluído!"
+        ;;
+
+    reset)
+        echo "⚠️  Resetando consumer group..."
+        echo "   Isso fará o consumer reprocessar todas as mensagens desde o início"
+        read -p "   Confirma? (y/N): " confirm
+        if [[ $confirm == [yY] ]]; then
+            ./reset-consumer.sh
+            echo "✅ Consumer group resetado!"
+        else
+            echo "❌ Operação cancelada"
+        fi
+        ;;
+
+    cleanup)
+        echo "🧹 Limpando arquivos antigos..."
         
-        echo "=== CONSUMER LOGS ==="
-        tail -f consumer.log &
-        CONSUMER_TAIL_PID=$!
+        # Limpar logs antigos (mais de 7 dias)
+        find ~/.pm2/logs -name "*.log" -mtime +7 -delete 2>/dev/null || true
+        echo "   📄 Logs antigos removidos"
         
-        # Parar tail quando Ctrl+C
-        trap "kill $API_TAIL_PID $CONSUMER_TAIL_PID 2>/dev/null; exit" INT
-        wait
+        # Limpar fallbacks processados com sucesso (mais de 3 dias)
+        if [ -d "fallback-webhooks" ]; then
+            find fallback-webhooks -name "webhook-*.json" -mtime +3 -delete 2>/dev/null || true
+            echo "   📁 Fallbacks antigos removidos"
+        fi
+        
+        # Rotacionar logs do sistema
+        pm2 flush
+        echo "   🔄 Logs do PM2 rotacionados"
+        
+        echo "✅ Limpeza concluída!"
+        ;;
+
+    emergency)
+        echo "🆘 MODO EMERGÊNCIA ATIVADO"
+        echo "   Parando Kafka e banco, mantendo apenas webhook endpoint"
+        echo "   Todos os webhooks serão salvos em arquivos"
+        
+        pm2 stop webhook-consumer
+        pm2 restart webhook-api --update-env -- --emergency-mode
+        
+        echo "⚠️  Sistema em modo emergência!"
+        echo "   Webhooks sendo salvos em: fallback-webhooks/"
+        echo "   Use './manage.sh recover' para voltar ao normal"
+        ;;
+
+    recover)
+        echo "🔧 Recuperando do modo emergência..."
+        
+        pm2 restart webhook-api
+        pm2 start webhook-consumer
+        
+        echo "🔄 Reprocessando mensagens acumuladas..."
+        node fallback-processor.js
+        
+        echo "✅ Sistema recuperado!"
+        echo "💡 Execute './manage.sh health' para verificar"
+        ;;
+        
+    startup)
+        echo "🔧 Configurando PM2 para iniciar automaticamente no boot..."
+        pm2 startup
+        echo ""
+        echo "⚠️  Execute o comando mostrado acima como root para configurar o startup automático"
+        echo "Depois execute: ./manage.sh save"
+        ;;
+        
+    save)
+        echo "💾 Salvando configuração atual do PM2..."
+        pm2 save
+        echo "✅ Configuração salva! O sistema agora iniciará automaticamente após reboot."
+        ;;
+
+    help|--help|-h)
+        show_help
         ;;
         
     *)
-        echo "Usage: $0 {start|stop|restart|status|logs}"
-        echo ""
-        echo "Comandos disponíveis:"
-        echo "  start   - Inicia API e Consumer"
-        echo "  stop    - Para API e Consumer"
-        echo "  restart - Reinicia o sistema"
-        echo "  status  - Mostra status dos serviços"
-        echo "  logs    - Mostra logs em tempo real"
-        echo ""
-        echo "Interfaces Web disponíveis:"
-        echo "  Kafka UI: http://SEU_IP:8080 (se instalado)"
-        echo "  Kafdrop:  http://SEU_IP:9000 (se instalado via Docker)"
+        show_help
         exit 1
         ;;
 esac

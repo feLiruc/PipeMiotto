@@ -73,7 +73,7 @@ async function ensureColumn(table, column) {
   }
 }
 
-async function insertFullLog(event, entity, fullPayload, empresa) {
+async function insertFullLog(event, entity, fullPayload, empresa, deliveryStatus = 'delivered', processingTimeMs = null) {
   // Verificar se já existe um registro com o mesmo webhookId para evitar duplicatas
   const webhookId = fullPayload.webhookId;
   if (webhookId) {
@@ -89,11 +89,26 @@ async function insertFullLog(event, entity, fullPayload, empresa) {
   }
   
   const sql = `
-    INSERT INTO webhook_full_log (event, entity, payload, empresa)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO webhook_full_log (event, entity, payload, empresa, delivery_status, processing_time_ms)
+    VALUES (?, ?, ?, ?, ?, ?)
   `;
-  await pool.query(sql, [event, entity, JSON.stringify(fullPayload), empresa]);
-  console.log(`📝 Evento '${event}' logado na full_log. WebhookId: ${webhookId || 'N/A'}`);
+  await pool.query(sql, [event, entity, JSON.stringify(fullPayload), empresa, deliveryStatus, processingTimeMs]);
+  console.log(`📝 Evento '${event}' logado na full_log. WebhookId: ${webhookId || 'N/A'}, Status: ${deliveryStatus}`);
+}
+
+// Função para testar conexão
+async function testConnection() {
+  if (!pool) {
+    throw new Error('Pool de conexões não inicializado');
+  }
+  
+  const connection = await pool.getConnection();
+  try {
+    await connection.ping();
+    return true;
+  } finally {
+    connection.release();
+  }
 }
 
 async function insertEvent(table, event, data, empresa) {
@@ -132,12 +147,14 @@ async function init(shouldClean) {
     await dropTablesOnce();
   }
   
-  // Criar tabela webhook_full_log primeiro (essencial para o consumer)
+    // Criar tabela webhook_full_log primeiro (essencial para o consumer)
   await ensureTable('webhook_full_log', [
     ['event', 'VARCHAR(50)'],
     ['entity', 'VARCHAR(50)'],
     ['payload', 'LONGTEXT'],
     ['empresa', 'VARCHAR(100)'],
+    ['delivery_status', 'VARCHAR(20) DEFAULT "delivered"'],
+    ['processing_time_ms', 'INT'],
     ['created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP']
   ]);
   
@@ -151,5 +168,6 @@ async function init(shouldClean) {
 module.exports = {
   init,
   insertEvent,
-  insertFullLog
+  insertFullLog,
+  testConnection
 };

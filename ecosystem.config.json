@@ -1,0 +1,46 @@
+{
+  "apps": [
+    {
+      "name": "pipemiotto-api",
+      "script": "index.js",
+      "cwd": "/var/www/html/PipeMiotto",
+      "instances": 1,
+      "exec_mode": "fork",
+      "watch": false,
+      "env": {
+        "NODE_ENV": "production"
+      },
+      "error_file": "/var/www/html/PipeMiotto/logs/api-error.log",
+      "out_file": "/var/www/html/PipeMiotto/logs/api-out.log",
+      "log_file": "/var/www/html/PipeMiotto/logs/api-combined.log",
+      "time": true,
+      "restart_delay": 5000,
+      "max_restarts": 10,
+      "min_uptime": "10s",
+      "max_memory_restart": "500M",
+      "autorestart": true
+    },
+    {
+      "name": "pipemiotto-consumer",
+      "script": "consumer.js",
+      "cwd": "/var/www/html/PipeMiotto",
+      "instances": 1,
+      "exec_mode": "fork",
+      "watch": false,
+      "env": {
+        "NODE_ENV": "production"
+      },
+      "error_file": "/var/www/html/PipeMiotto/logs/consumer-error.log",
+      "out_file": "/var/www/html/PipeMiotto/logs/consumer-out.log",
+      "log_file": "/var/www/html/PipeMiotto/logs/consumer-combined.log",
+      "time": true,
+      "restart_delay": 5000,
+      "max_restarts": 10,
+      "min_uptime": "10s",
+      "max_memory_restart": "500M",
+      "autorestart": true,
+      "wait_ready": true,
+      "listen_timeout": 10000
+    }
+  ]
+}
