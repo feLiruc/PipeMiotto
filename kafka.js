@@ -2,7 +2,7 @@
 const { Kafka } = require('kafkajs');
 require('dotenv').config();
 
-const kafka = Kafka({
+const kafka = new Kafka({
   clientId: 'pipemiotto-webhook',
   brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
   retry: {
@@ -101,7 +101,6 @@ class KafkaService {
             
           } catch (error) {
             console.error('❌ Erro ao processar mensagem:', error);
-            // Aqui você pode implementar lógica para reenviar para DLQ
             await this.sendToDLQ(topic, message, error);
           }
         }
