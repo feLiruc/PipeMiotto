@@ -20,6 +20,8 @@
   "scripts": {
     "start": "node index.js",
     "consumer": "node consumer.js",
+    "consumer:old": "node consumer.js --from-beginning",
+    "debug": "node debug-system.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   }
 }

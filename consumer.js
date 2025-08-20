@@ -83,8 +83,12 @@ class WebhookProcessor {
       await init(false); // Inicializar banco de dados
       console.log('💾 Banco de dados inicializado');
       
+      // Verificar se deve processar mensagens antigas
+      const processOldMessages = process.argv.includes('--from-beginning');
+      console.log(`🔄 Processando mensagens antigas: ${processOldMessages ? 'SIM' : 'NÃO'}`);
+      
       // Processar mensagens do tópico principal
-      await kafkaService.subscribeToTopic('webhook-events', this.processWebhookMessage.bind(this));
+      await kafkaService.subscribeToTopic('webhook-events', this.processWebhookMessage.bind(this), processOldMessages);
       
       console.log('🔔 Consumer iniciado e aguardando mensagens...');
       

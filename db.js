@@ -74,12 +74,26 @@ async function ensureColumn(table, column) {
 }
 
 async function insertFullLog(event, entity, fullPayload, empresa) {
+  // Verificar se já existe um registro com o mesmo webhookId para evitar duplicatas
+  const webhookId = fullPayload.webhookId;
+  if (webhookId) {
+    const [existing] = await pool.query(`
+      SELECT auto_id FROM webhook_full_log 
+      WHERE JSON_EXTRACT(payload, '$.webhookId') = ?
+    `, [webhookId]);
+    
+    if (existing.length > 0) {
+      console.log(`⚠️ Webhook ${webhookId} já foi processado, pulando...`);
+      return;
+    }
+  }
+  
   const sql = `
     INSERT INTO webhook_full_log (event, entity, payload, empresa)
     VALUES (?, ?, ?, ?)
   `;
   await pool.query(sql, [event, entity, JSON.stringify(fullPayload), empresa]);
-  console.log(`📝 Evento '${event}' logado na full_log.`);
+  console.log(`📝 Evento '${event}' logado na full_log. WebhookId: ${webhookId || 'N/A'}`);
 }
 
 async function insertEvent(table, event, data, empresa) {
@@ -117,6 +131,16 @@ async function init(shouldClean) {
   if (shouldClean) {
     await dropTablesOnce();
   }
+  
+  // Criar tabela webhook_full_log primeiro (essencial para o consumer)
+  await ensureTable('webhook_full_log', [
+    ['event', 'VARCHAR(50)'],
+    ['entity', 'VARCHAR(50)'],
+    ['payload', 'LONGTEXT'],
+    ['empresa', 'VARCHAR(100)'],
+    ['created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP']
+  ]);
+  
   for (const [table, def] of Object.entries(config.tables)) {
     const columns = Object.entries(def.columns);
     await ensureTable(table, columns);

@@ -75,12 +75,12 @@ class KafkaService {
     }
   }
 
-  async subscribeToTopic(topic, messageHandler) {
+  async subscribeToTopic(topic, messageHandler, fromBeginning = false) {
     try {
       await this.connectConsumer();
-      await consumer.subscribe({ topic, fromBeginning: false });
+      await consumer.subscribe({ topic, fromBeginning });
       
-      console.log(`🔔 Inscrito no tópico: ${topic}`);
+      console.log(`🔔 Inscrito no tópico: ${topic} (fromBeginning: ${fromBeginning})`);
       
       await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
