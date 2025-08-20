@@ -9,16 +9,31 @@ const DB_NAME = process.env.DB_NAME;
 let pool;
 
 async function connectToDatabase() {
-  pool = await mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: DB_NAME,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-  });
-  console.log(`🔌 Conectado ao banco '${DB_NAME}'`);
+  try {
+    pool = await mysql.createPool({
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: DB_NAME,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+      acquireTimeout: 60000,
+      timeout: 60000,
+      reconnect: true
+    });
+    
+    // Testar conexão
+    const connection = await pool.getConnection();
+    await connection.ping();
+    connection.release();
+    
+    console.log(`🔌 Conectado ao banco '${DB_NAME}'`);
+  } catch (error) {
+    console.error('❌ Erro ao conectar no banco de dados:', error);
+    console.error('🔍 Verifique suas configurações no arquivo .env');
+    throw error;
+  }
 }
 
 

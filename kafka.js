@@ -1,5 +1,5 @@
 // kafka.js
-const { Kafka } = require('kafkajs');
+const { Kafka, Partitioners } = require('kafkajs');
 require('dotenv').config();
 
 const kafka = new Kafka({
@@ -13,8 +13,9 @@ const kafka = new Kafka({
 
 const producer = kafka.producer({
   maxInFlightRequests: 1,
-  idempotent: true,
-  transactionTimeout: 30000
+  idempotent: false, // Mudando para false para evitar conflito com retries
+  transactionTimeout: 30000,
+  createPartitioner: Partitioners.LegacyPartitioner
 });
 
 const consumer = kafka.consumer({
