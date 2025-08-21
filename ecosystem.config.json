@@ -10,9 +10,9 @@
       "env": {
         "NODE_ENV": "production"
       },
-      "error_file": "/var/www/html/PipeMiotto/logs/api-error.log",
-      "out_file": "/var/www/html/PipeMiotto/logs/api-out.log",
-      "log_file": "/var/www/html/PipeMiotto/logs/api-combined.log",
+      "error_file": "/www/wwwroot/pipedrive/logs/api-error.log",
+      "out_file": "/www/wwwroot/pipedrive/logs/api-out.log",
+      "log_file": "/www/wwwroot/pipedrive/logs/api-combined.log",
       "time": true,
       "restart_delay": 5000,
       "max_restarts": 10,
@@ -23,16 +23,16 @@
     {
       "name": "pipemiotto-consumer",
       "script": "consumer.js",
-      "cwd": "/var/www/html/PipeMiotto",
+      "cwd": "/www/wwwroot/pipedrive",
       "instances": 1,
       "exec_mode": "fork",
       "watch": false,
       "env": {
         "NODE_ENV": "production"
       },
-      "error_file": "/var/www/html/PipeMiotto/logs/consumer-error.log",
-      "out_file": "/var/www/html/PipeMiotto/logs/consumer-out.log",
-      "log_file": "/var/www/html/PipeMiotto/logs/consumer-combined.log",
+      "error_file": "/www/wwwroot/pipedrive/logs/consumer-error.log",
+      "out_file": "/www/wwwroot/pipedrive/logs/consumer-out.log",
+      "log_file": "/www/wwwroot/pipedrive/logs/consumer-combined.log",
       "time": true,
       "restart_delay": 5000,
       "max_restarts": 10,
