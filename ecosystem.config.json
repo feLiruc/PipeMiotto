@@ -3,7 +3,7 @@
     {
       "name": "pipemiotto-api",
       "script": "index.js",
-      "cwd": "/var/www/html/PipeMiotto",
+      "cwd": "/www/wwwroot/pipedrive",
       "instances": 1,
       "exec_mode": "fork",
       "watch": false,
