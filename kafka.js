@@ -4,10 +4,24 @@ require('dotenv').config();
 
 const kafka = new Kafka({
   clientId: 'pipemiotto-webhook',
-  brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
+  brokers: [process.env.KAFKA_BROKER || '127.0.0.1:9092'],
+  connectionTimeout: 10000,
+  requestTimeout: 30000,
   retry: {
     initialRetryTime: 100,
     retries: 8
+  },
+  // Forçar IPv4
+  socketFactory: ({ host, port, ssl, onConnect }) => {
+    const net = require('net');
+    const socket = net.createConnection({
+      host: host,
+      port: port,
+      family: 4 // Força IPv4
+    });
+    
+    socket.on('connect', onConnect);
+    return socket;
   }
 });
 
